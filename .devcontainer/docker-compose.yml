@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  devcontainer:
+    container_name: wilt-backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../:/backend:cached
+    network_mode: service:db
+    command: sleep infinity
+
+  db:
+    container_name: wilt-db
+    image: postgres:16
+    restart: unless-stopped
+    volumes:
+      - wiltdb-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_USER: wilt
+      POSTGRES_DB: wilt
+  
+volumes:
+  wiltdb-data:

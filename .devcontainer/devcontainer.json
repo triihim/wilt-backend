@@ -1,0 +1,22 @@
+{
+  "name": "WILT API",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/backend",
+  "remoteUser": "node",
+  "postCreateCommand": "git config --global --add safe.directory /backend",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "[typescript]": {
+          "editor.formatOnSave": true,
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        }
+      },
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  }
+}
