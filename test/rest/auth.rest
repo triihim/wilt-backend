@@ -1,0 +1,9 @@
+@BASE_URL=host.docker.internal:3000
+
+POST http://{{BASE_URL}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "test.asd@gmail.com",
+  "password": "This_Is_Strong_P4ssword!"
+}
