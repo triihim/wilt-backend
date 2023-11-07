@@ -4,18 +4,28 @@
   "service": "devcontainer",
   "workspaceFolder": "/backend",
   "remoteUser": "node",
-  "postCreateCommand": "git config --global --add safe.directory /backend",
+  "mounts": [
+    "source=${localWorkspaceFolderBasename}-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume"
+  ],
+  "postCreateCommand": "git config --global --add safe.directory /backend && sudo chown node node_modules",
   "customizations": {
     "vscode": {
       "settings": {
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
         "[typescript]": {
+          "editor.formatOnSave": true,
+          "editor.defaultFormatter": "esbenp.prettier-vscode"
+        },
+        "[javascript]": {
           "editor.formatOnSave": true,
           "editor.defaultFormatter": "esbenp.prettier-vscode"
         }
       },
       "extensions": [
         "esbenp.prettier-vscode",
-        "dbaeumer.vscode-eslint"
+        "dbaeumer.vscode-eslint",
+        "humao.rest-client"
       ]
     }
   }
