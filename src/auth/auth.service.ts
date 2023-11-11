@@ -16,8 +16,7 @@ export class AuthService {
 
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
-    @InjectRepository(RefreshToken)
-    private readonly refreshTokenRepository: Repository<RefreshToken>,
+    @InjectRepository(RefreshToken) private readonly refreshTokenRepository: Repository<RefreshToken>,
     private readonly configService: ConfigService,
   ) {}
 
@@ -26,10 +25,7 @@ export class AuthService {
       this.logger.log(`User registration with email: ${email}`);
       const saltRounds = 12; // TODO: Get from env
       const passwordHash = await hash(plaintextPassword, saltRounds);
-      await this.userRepository.insert({
-        email,
-        password: passwordHash,
-      });
+      await this.userRepository.insert({ email, password: passwordHash });
     } catch (e: unknown) {
       this.logger.error('User registration failed');
       this.logger.error(e);
@@ -37,15 +33,10 @@ export class AuthService {
     }
   }
 
-  async loginUser(
-    email: string,
-    plaintextPassword: string,
-  ): Promise<AuthTokens> {
+  async loginUser(email: string, plaintextPassword: string): Promise<AuthTokens> {
     try {
       this.logger.log(`Login attempt with email: ${email}`);
-      const user = await this.userRepository.findOneOrFail({
-        where: { email },
-      });
+      const user = await this.userRepository.findOneOrFail({ where: { email } });
 
       const isCorrectPassword = await user.validatePassword(plaintextPassword);
 
@@ -65,14 +56,9 @@ export class AuthService {
     }
   }
 
-  async refreshAuthToken(
-    userId: string,
-    tokens: AuthTokens,
-  ): Promise<AuthTokens> {
+  async refreshAuthToken(userId: string, tokens: AuthTokens): Promise<AuthTokens> {
     const tokenSecret = this.configService.get<string>('TOKEN_SECRET');
-    const refreshTokenExpiresIn = this.configService.get<string>(
-      'REFRESH_TOKEN_EXPIRES_IN',
-    );
+    const refreshTokenExpiresIn = this.configService.get<string>('REFRESH_TOKEN_EXPIRES_IN');
 
     if (!tokenSecret) {
       throw new Error('Missing jwt secret');
@@ -89,17 +75,13 @@ export class AuthService {
       return tokens;
     } catch (e: unknown) {
       if (isTokenExpiredError(e)) {
-        const refreshToken = await this.refreshTokenRepository.findOneBy({
-          id: tokens.refreshToken,
-        });
+        const refreshToken = await this.refreshTokenRepository.findOneBy({ id: tokens.refreshToken });
 
         if (!refreshToken) {
           throw new Error('No refresh token found');
         }
 
-        const isRefreshTokenExpired =
-          Date.now() - refreshToken.createdAt.getTime() >
-          ms(refreshTokenExpiresIn);
+        const isRefreshTokenExpired = Date.now() - refreshToken.createdAt.getTime() > ms(refreshTokenExpiresIn);
 
         if (isRefreshTokenExpired) {
           throw new Error('Refresh token is expired');
@@ -120,9 +102,7 @@ export class AuthService {
   }
 
   private async createRefreshToken(user: User) {
-    const existingRefreshToken = await this.refreshTokenRepository.findOne({
-      where: { user: { id: user.id } },
-    });
+    const existingRefreshToken = await this.refreshTokenRepository.findOne({ where: { user: { id: user.id } } });
 
     if (existingRefreshToken) {
       this.logger.log(`Replacing existing refresh token for user: ${user.id}`);
@@ -137,8 +117,7 @@ export class AuthService {
   private async createAuthToken(user: User) {
     const tokenSecret = this.configService.get<string>('TOKEN_SECRET');
     const tokenExpiresIn = this.configService.get<string>('TOKEN_EXPIRES_IN');
-    const tokenAlgorithm =
-      this.configService.get<jwt.Algorithm>('TOKEN_ALGORITHM');
+    const tokenAlgorithm = this.configService.get<jwt.Algorithm>('TOKEN_ALGORITHM');
 
     if (!tokenSecret) {
       throw new Error('Missing jwt secret');

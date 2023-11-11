@@ -1,10 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  Logger,
-  SetMetadata,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, Logger, SetMetadata } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
@@ -12,11 +6,9 @@ import * as jwt from 'jsonwebtoken';
 import { AuthTokenPayload, AuthorizedRequest } from './types/auth.types';
 import { isTokenExpiredError } from './helpers/token.helpers';
 
-export const AllowUnauthorizedRequest = () =>
-  SetMetadata('allowUnauthorizedRequest', true);
+export const AllowUnauthorizedRequest = () => SetMetadata('allowUnauthorizedRequest', true);
 
-export const AllowExpiredAuthToken = () =>
-  SetMetadata('allowExpiredAuthToken', true);
+export const AllowExpiredAuthToken = () => SetMetadata('allowExpiredAuthToken', true);
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -28,19 +20,11 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const skipAuthCheck = !!this.reflector.get<boolean | undefined>(
-      'allowUnauthorizedRequest',
-      context.getHandler(),
-    );
+    const skipAuthCheck = !!this.reflector.get<boolean | undefined>('allowUnauthorizedRequest', context.getHandler());
 
     if (skipAuthCheck) {
       return true;
     }
-
-    const allowExpiredAuthToken = !!this.reflector.get<boolean | undefined>(
-      'allowExpiredAuthToken',
-      context.getHandler(),
-    );
 
     const request = context.switchToHttp().getRequest<Request>();
     const authHeader = request.header('authorization');
@@ -64,9 +48,14 @@ export class AuthGuard implements CanActivate {
     const authToken = authHeader.split(' ')[1];
     let decodedToken: AuthTokenPayload | null = null;
 
+    // TODO: This is messy, refactor.
     try {
       decodedToken = jwt.verify(authToken, tokenSecret) as AuthTokenPayload;
     } catch (e: unknown) {
+      const allowExpiredAuthToken = !!this.reflector.get<boolean | undefined>(
+        'allowExpiredAuthToken',
+        context.getHandler(),
+      );
       if (isTokenExpiredError(e) && allowExpiredAuthToken) {
         decodedToken = jwt.decode(authToken) as AuthTokenPayload;
       } else {
