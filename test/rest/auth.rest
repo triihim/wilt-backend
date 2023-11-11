@@ -19,3 +19,15 @@ Content-Type: application/json
   "email": "test.asd@gmail.com",
   "password": "This_Is_Strong_P4ssword!"
 }
+
+###
+
+# REFRESH TOKENS
+POST http://{{BASE_URL}}/auth/refresh-token
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImVtYWlsIjoidGVzdC5hc2RAZ21haWwuY29tIn0sImlhdCI6MTY5OTcwMTExMSwiZXhwIjoxNjk5NzAxNDExLCJzdWIiOiI0NWQ1ZTQxNy1hODg4LTRmMzktYjVjMy00YzQxYTFkYjdhNzcifQ.2HTFefm9agFkwaS15PZ4MECvNZlVhqb0Wg77gq0RqoU
+
+{
+  "refreshToken": "313c4774-0bb4-42f5-97ae-a95a63a092aa",
+  "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImVtYWlsIjoidGVzdC5hc2RAZ21haWwuY29tIn0sImlhdCI6MTY5OTY5Mzg5OSwiZXhwIjoxNjk5Njk0MTk5LCJzdWIiOiI0NWQ1ZTQxNy1hODg4LTRmMzktYjVjMy00YzQxYTFkYjdhNzcifQ.ykrPZuJovYTgcsQwypqxywQGs8Rp7LvkwDEuQJSG5Qk"
+}

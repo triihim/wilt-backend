@@ -4,18 +4,22 @@ import {
   HttpException,
   HttpStatus,
   Post,
+  Req,
 } from '@nestjs/common';
-import { RegistrationRequestDto } from './dto/registration-request.dto';
+import { RegistrationDto } from './dto/registration.dto';
 import { AuthService } from './auth.service';
-import { LoginRequestDto } from './dto/login-request.dto';
-import { LoginResponseDto } from './dto/login-response.dto';
+import { LoginDto } from './dto/login.dto';
+import { AuthTokenDto } from './dto/auth-token.dto';
+import { AllowExpiredAuthToken, AllowUnauthorizedRequest } from './auth.guard';
+import { AuthorizedRequest } from './types/auth.types';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('/register')
-  async register(@Body() registerDto: RegistrationRequestDto): Promise<void> {
+  @Post('register')
+  @AllowUnauthorizedRequest()
+  async register(@Body() registerDto: RegistrationDto): Promise<void> {
     try {
       await this.authService.registerUser(
         registerDto.email,
@@ -29,14 +33,32 @@ export class AuthController {
     }
   }
 
-  @Post('/login')
-  async login(@Body() loginDto: LoginRequestDto): Promise<LoginResponseDto> {
+  @Post('login')
+  @AllowUnauthorizedRequest()
+  async login(@Body() loginDto: LoginDto): Promise<AuthTokenDto> {
     try {
-      const authToken = await this.authService.loginUser(
+      const authTokens = await this.authService.loginUser(
         loginDto.email,
         loginDto.password,
       );
-      return authToken;
+      return authTokens;
+    } catch (e: unknown) {
+      throw new HttpException('forbidden', HttpStatus.FORBIDDEN);
+    }
+  }
+
+  @Post('refresh-token')
+  @AllowExpiredAuthToken()
+  async refreshToken(
+    @Body() authTokenDto: AuthTokenDto,
+    @Req() request: AuthorizedRequest,
+  ): Promise<AuthTokenDto> {
+    try {
+      const authTokens = await this.authService.refreshAuthToken(
+        request.user.id,
+        authTokenDto,
+      );
+      return authTokens;
     } catch (e: unknown) {
       throw new HttpException('forbidden', HttpStatus.FORBIDDEN);
     }
