@@ -12,7 +12,7 @@ import { isTokenExpiredError } from './helpers/token.helpers';
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
+  private readonly logger = new Logger(AuthService.name); // TODO: Replace static loggers
 
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
@@ -41,6 +41,7 @@ export class AuthService {
       const isCorrectPassword = await user.validatePassword(plaintextPassword);
 
       if (!isCorrectPassword) {
+        // TODO: Limit attempts
         this.logger.warn(`Invalid password submitted for user: ${email}`);
         throw new Error('invalid password');
       }
@@ -59,19 +60,22 @@ export class AuthService {
   async refreshAuthToken(userId: string, tokens: AuthTokens): Promise<AuthTokens> {
     const tokenSecret = this.configService.get<string>('TOKEN_SECRET');
     const refreshTokenExpiresIn = this.configService.get<string>('REFRESH_TOKEN_EXPIRES_IN');
-
-    if (!tokenSecret) {
-      throw new Error('Missing jwt secret');
-    }
-
-    if (!refreshTokenExpiresIn) {
-      throw new Error('Missing refresh token expiration');
-    }
+    this.logger.log(`Token refresh requested by user ${userId}`);
 
     try {
+      if (!tokenSecret) {
+        throw new Error('Missing jwt secret');
+      }
+  
+      if (!refreshTokenExpiresIn) {
+        throw new Error('Missing refresh token expiration');
+      }
+
       jwt.verify(tokens.authToken, tokenSecret);
-      // Auth token is still valid -> do nothing.
+      
       this.logger.log('Auth token is still valid, no refresh needed');
+      
+      // Auth token is still valid -> do nothing.
       return tokens;
     } catch (e: unknown) {
       if (isTokenExpiredError(e)) {
@@ -87,7 +91,8 @@ export class AuthService {
           throw new Error('Refresh token is expired');
         }
 
-        // Auth token is expired, but refresh token is still valid.
+        // Auth token is expired, but refresh token is still valid -> return new auth token.
+
         const user = await this.userRepository.findOneBy({ id: userId });
 
         if (!user) {
@@ -97,8 +102,10 @@ export class AuthService {
         const newAuthToken = await this.createAuthToken(user);
         return { ...tokens, authToken: newAuthToken };
       }
+  
+      this.logger.error(e);
+      throw e;
     }
-    throw new Error('Could not refresh auth token');
   }
 
   private async createRefreshToken(user: User) {
