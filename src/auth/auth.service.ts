@@ -66,19 +66,19 @@ export class AuthService {
       if (!tokenSecret) {
         throw new Error('Missing jwt secret');
       }
-  
+
       if (!refreshTokenExpiresIn) {
         throw new Error('Missing refresh token expiration');
       }
 
       jwt.verify(tokens.authToken, tokenSecret);
-      
+
       this.logger.log('Auth token is still valid, no refresh needed');
-      
+
       // Auth token is still valid -> do nothing.
       return tokens;
     } catch (e: unknown) {
-      if (isTokenExpiredError(e)) {
+      if (isTokenExpiredError(e) && refreshTokenExpiresIn) {
         const refreshToken = await this.refreshTokenRepository.findOneBy({ id: tokens.refreshToken });
 
         if (!refreshToken) {
@@ -102,7 +102,7 @@ export class AuthService {
         const newAuthToken = await this.createAuthToken(user);
         return { ...tokens, authToken: newAuthToken };
       }
-  
+
       this.logger.error(e);
       throw e;
     }
