@@ -1,4 +1,4 @@
-import { Body, Controller, HttpException, HttpStatus, Post, Req } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpException, HttpStatus, Post, Req } from '@nestjs/common';
 import { RegistrationDto } from './dto/registration.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -11,16 +11,19 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @HttpCode(HttpStatus.CREATED)
   @AllowUnauthorizedRequest()
   async register(@Body() registerDto: RegistrationDto): Promise<void> {
     try {
       await this.authService.registerUser(registerDto.email, registerDto.password);
     } catch (e: unknown) {
+      // Returning a status code of 500 does not explicitly disclose user existence.
       throw new HttpException('registration failed', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   @AllowUnauthorizedRequest()
   async login(@Body() loginDto: LoginDto): Promise<AuthTokenDto> {
     try {
@@ -32,6 +35,7 @@ export class AuthController {
   }
 
   @Post('refresh-token')
+  @HttpCode(HttpStatus.OK)
   @AllowExpiredAuthToken()
   async refreshToken(@Body() authTokenDto: AuthTokenDto, @Req() request: AuthorizedRequest): Promise<AuthTokenDto> {
     try {
