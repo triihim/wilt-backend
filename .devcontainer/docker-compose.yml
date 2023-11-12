@@ -8,19 +8,40 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ../:/backend:cached
-    network_mode: service:db
     command: sleep infinity
+    networks:
+      - wilt-network
 
-  db:
-    container_name: wilt-db
+  db-dev:
+    container_name: wilt-dev-db
     image: postgres:16
     restart: unless-stopped
+    ports:
+      - 5432:5432
     volumes:
       - wiltdb-data:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: supersecret
       POSTGRES_USER: wilt
-      POSTGRES_DB: wilt
+      POSTGRES_DB: wilt-dev
+    networks:
+      - wilt-network
   
+  db-test:
+    container_name: wilt-test-db
+    image: postgres:16
+    restart: unless-stopped
+    ports:
+      - 5435:5432
+    environment:
+      POSTGRES_PASSWORD: supersecret
+      POSTGRES_USER: wilt
+      POSTGRES_DB: wilt-test
+    networks:
+      - wilt-network
+
+networks:
+  wilt-network:
+
 volumes:
   wiltdb-data:
