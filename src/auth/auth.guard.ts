@@ -1,10 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable, Logger, SetMetadata } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
-import * as jwt from 'jsonwebtoken';
-import { AuthTokenPayload, AuthorizedRequest } from './types/auth.types';
-import { isTokenExpiredError } from './helpers/token.helpers';
+import { AuthService } from './auth.service';
+import { AuthorizedRequest } from './types/auth.types';
 
 export const AllowUnauthorizedRequest = () => SetMetadata('allowUnauthorizedRequest', true);
 
@@ -16,7 +14,7 @@ export class AuthGuard implements CanActivate {
 
   constructor(
     private readonly reflector: Reflector,
-    private readonly configService: ConfigService,
+    private readonly authService: AuthService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -33,40 +31,29 @@ export class AuthGuard implements CanActivate {
       return false;
     }
 
-    const tokenSecret = this.configService.get<string>('TOKEN_SECRET');
-
-    if (!tokenSecret) {
-      this.logger.error('Token secret missing');
-      return false;
-    }
-
-    if (!authHeader.startsWith('Bearer ')) {
-      this.logger.error('Invalid authorization header');
-      return false;
-    }
-
     const authToken = authHeader.split(' ')[1];
-    let decodedToken: AuthTokenPayload | null = null;
+    const allowExpiredToken = !!this.reflector.get<boolean | undefined>('allowExpiredAuthToken', context.getHandler());
+    const verificationResult = this.authService.verifyAuthToken(authToken);
 
-    // TODO: This is messy, refactor.
-    try {
-      decodedToken = jwt.verify(authToken, tokenSecret) as AuthTokenPayload;
-    } catch (e: unknown) {
-      const allowExpiredAuthToken = !!this.reflector.get<boolean | undefined>(
-        'allowExpiredAuthToken',
-        context.getHandler(),
-      );
-      if (isTokenExpiredError(e) && allowExpiredAuthToken) {
-        decodedToken = jwt.decode(authToken) as AuthTokenPayload;
-      } else {
-        this.logger.error(e);
-      }
-    } finally {
-      if (decodedToken) {
-        (request as AuthorizedRequest).user = { id: decodedToken.sub };
+    this.logger.log(
+      `Auth token verification result: ${verificationResult.status}, ${
+        verificationResult.status !== 'invalid' ? verificationResult.payload.sub : ''
+      }`,
+    );
+
+    if (verificationResult.status !== 'invalid') {
+      const payload = verificationResult.payload;
+      (request as AuthorizedRequest).user = { id: payload.user.id };
+    }
+
+    switch (verificationResult.status) {
+      case 'valid':
         return true;
-      }
-      return false;
+      case 'expired':
+        return allowExpiredToken;
+      case 'invalid':
+      default:
+        return false;
     }
   }
 }

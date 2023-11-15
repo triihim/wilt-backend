@@ -11,12 +11,14 @@ import supertest from 'supertest';
 import { AuthTokenDto } from '../dto/auth-token.dto';
 import * as jwt from 'jsonwebtoken';
 import ms from 'ms';
+import { validateConfig } from '../../config/config-validation';
 
 describe('Authentication', () => {
   let app: INestApplication;
   let userRepository: Repository<User>;
   let refreshTokenRepository: Repository<RefreshToken>;
   let configService: ConfigService;
+  let tokenSecret: string;
 
   const clearUsedDbTables = async () => {
     await refreshTokenRepository.delete({});
@@ -29,6 +31,7 @@ describe('Authentication', () => {
         ConfigModule.forRoot({
           isGlobal: true,
           envFilePath: [`./env/test.env`],
+          validate: validateConfig,
         }),
         TypeOrmModule.forRootAsync({
           useClass: TypeOrmConfigService,
@@ -44,6 +47,7 @@ describe('Authentication', () => {
     userRepository = await module.get(getRepositoryToken(User));
     refreshTokenRepository = await module.get(getRepositoryToken(RefreshToken));
     configService = await module.get(ConfigService);
+    tokenSecret = configService.getOrThrow<string>('TOKEN_SECRET');
   });
 
   afterAll(async () => {
@@ -108,7 +112,7 @@ describe('Authentication', () => {
         await supertest(app.getHttpServer()).post(loginEndpoint).send(loginDto).expect(HttpStatus.OK)
       ).body as AuthTokenDto;
 
-      expect(() => jwt.verify(authToken, configService.get<string>('TOKEN_SECRET')!)).not.toThrow();
+      expect(() => jwt.verify(authToken, tokenSecret)).not.toThrow();
       expect(await refreshTokenRepository.exist({ where: { id: refreshToken } })).toBe(true);
     });
 
@@ -134,7 +138,7 @@ describe('Authentication', () => {
     });
 
     it('should not refresh still valid auth token', async () => {
-      const authToken = jwt.sign({ user: { email: userEmail } }, configService.get<string>('TOKEN_SECRET')!);
+      const authToken = jwt.sign({ user: { email: userEmail } }, tokenSecret);
       const authTokenDto: AuthTokenDto = { authToken: authToken, refreshToken: 'not used in this scenario' };
       await supertest(app.getHttpServer())
         .post(refreshTokenEndpoint)
@@ -144,7 +148,6 @@ describe('Authentication', () => {
     });
 
     it('should return new auth token in exchange for expired one given valid refresh token', async () => {
-      const tokenSecret = configService.get<string>('TOKEN_SECRET')!;
       const user = await userRepository.findOne({ where: { email: userEmail } });
 
       const validRefreshToken = await refreshTokenRepository.save({ user: user! });
@@ -164,8 +167,7 @@ describe('Authentication', () => {
     });
 
     it('should not return new tokens if refresh token is expired', async () => {
-      const tokenSecret = configService.get<string>('TOKEN_SECRET')!;
-      const refreshTokenExpiresIn = configService.get<string>('REFRESH_TOKEN_EXPIRES_IN')!;
+      const refreshTokenExpiresIn = configService.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN')!;
       const user = await userRepository.findOne({ where: { email: userEmail } });
 
       const expiredRefreshToken = await refreshTokenRepository.save({
@@ -185,7 +187,6 @@ describe('Authentication', () => {
     });
 
     it('should not return new tokens if refresh token does not exist', async () => {
-      const tokenSecret = configService.get<string>('TOKEN_SECRET')!;
       const expiredAuthToken = jwt.sign({ user: { email: userEmail } }, tokenSecret, { expiresIn: 0 });
       const authTokenDto: AuthTokenDto = { authToken: expiredAuthToken, refreshToken: 'does not exist' };
 
