@@ -6,7 +6,7 @@ import { hash } from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { RefreshToken } from './entities/refresh-token.entity';
 import * as jwt from 'jsonwebtoken';
-import { AuthTokenPayload, AuthTokenVerificationResult, AuthTokens } from './types/auth.types';
+import { DecodedAuthToken, AuthTokenVerificationResult, AuthTokens } from './types/auth.types';
 import ms from 'ms';
 import { Login } from './entities/login.entity';
 import dayjs from 'dayjs';
@@ -111,10 +111,10 @@ export class AuthService {
 
   verifyAuthToken(token: string): AuthTokenVerificationResult {
     try {
-      return { status: 'valid', payload: jwt.verify(token, this.tokenSecret) as AuthTokenPayload };
+      return { status: 'valid', payload: jwt.verify(token, this.tokenSecret) as DecodedAuthToken };
     } catch (e: unknown) {
       if (e instanceof jwt.TokenExpiredError) {
-        return { status: 'expired', payload: jwt.decode(token) as AuthTokenPayload };
+        return { status: 'expired', payload: jwt.decode(token) as DecodedAuthToken };
       }
     }
     return { status: 'invalid' };
@@ -159,7 +159,8 @@ export class AuthService {
   }
 
   private async createAuthToken(user: User) {
-    const authToken = jwt.sign({ user: { email: user.email } }, this.tokenSecret, {
+    const payload: Pick<DecodedAuthToken, 'user'> = { user: { id: user.id, email: user.email } };
+    const authToken = jwt.sign(payload, this.tokenSecret, {
       expiresIn: this.authTokenExpiresIn,
       algorithm: this.authTokenAlgorithm,
       subject: user.id,

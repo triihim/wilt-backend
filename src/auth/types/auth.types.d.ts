@@ -5,7 +5,7 @@ export type AuthTokens = {
   authToken: string;
 };
 
-export type AuthTokenPayload = {
+export type DecodedAuthToken = {
   user: {
     id: string;
     email: string;
@@ -18,7 +18,7 @@ export type AuthTokenPayload = {
 export type AuthTokenVerificationResult =
   | {
       status: 'valid' | 'expired';
-      payload: AuthTokenPayload;
+      payload: DecodedAuthToken;
     }
   | {
       status: 'invalid';
