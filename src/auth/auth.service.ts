@@ -67,7 +67,11 @@ export class AuthService {
         throw new Error(`Login is blocked for: ${email}, ${clientIp}`);
       }
 
-      const user = await this.userRepository.findOneOrFail({ where: { email } });
+      const user = await this.userRepository.findOneOrFail({
+        where: { email },
+        select: { email: true, password: true, id: true },
+      });
+
       const isCorrectPassword = await user.validatePassword(plaintextPassword);
 
       if (!isCorrectPassword) {
