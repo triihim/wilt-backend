@@ -1,0 +1,39 @@
+@BASE_URL=host.docker.internal:3000
+@TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiMDY5NGRjMTYtNDgyZS00MzBlLWI4ZjUtOTQ0NTY3MmU3MWUyIiwiZW1haWwiOiJ0ZXN0LmFzZEBnbWFpbC5jb20ifSwiaWF0IjoxNzAwMTcxODU5LCJleHAiOjE3MDAxNzU0NTksInN1YiI6IjA2OTRkYzE2LTQ4MmUtNDMwZS1iOGY1LTk0NDU2NzJlNzFlMiJ9.JBTsMawl_wiQJCn56mOWLb6PezoMSCyxkwP903hJXT0
+
+# CREATE LEARNING
+POST http://{{BASE_URL}}/learning
+Content-Type: application/json
+Authorization: Bearer {{TOKEN}}
+
+{
+  "title": "test title",
+  "description": ""
+}
+
+###
+
+# GET ONE BY ID
+GET http://{{BASE_URL}}/learning/5
+Authorization: Bearer {{TOKEN}}
+
+
+###
+
+# UPDATE ONE
+PUT http://{{BASE_URL}}/learning
+Authorization: Bearer {{TOKEN}}
+Content-Type: application/json
+
+{
+  "id": 3,
+  "title": "new title",
+  "description": "new desc"
+}
+
+
+###
+
+# DELETE ONE
+DELETE http://{{BASE_URL}}/learning/15
+Authorization: Bearer {{TOKEN}}
