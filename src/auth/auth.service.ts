@@ -8,8 +8,8 @@ import { RefreshToken } from './entities/refresh-token.entity';
 import * as jwt from 'jsonwebtoken';
 import { AuthTokenPayload, AuthTokenVerificationResult, AuthTokens } from './types/auth.types';
 import ms from 'ms';
-
-// TODO: Limit login attempts.
+import { Login } from './entities/login';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class AuthService {
@@ -19,10 +19,13 @@ export class AuthService {
   private readonly authTokenAlgorithm: jwt.Algorithm;
   private readonly passwordHashingSaltRounds: number;
   private readonly refreshTokenExpiresIn: string;
+  private readonly allowedLoginAttempts: number;
+  private readonly loginBlockDuration: string;
 
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @InjectRepository(RefreshToken) private readonly refreshTokenRepository: Repository<RefreshToken>,
+    @InjectRepository(Login) private readonly loginRepository: Repository<Login>,
     private readonly configService: ConfigService,
   ) {
     this.tokenSecret = this.configService.getOrThrow<string>('TOKEN_SECRET');
@@ -30,6 +33,8 @@ export class AuthService {
     this.authTokenAlgorithm = this.configService.getOrThrow<jwt.Algorithm>('TOKEN_ALGORITHM');
     this.passwordHashingSaltRounds = this.configService.getOrThrow<number>('SALT_ROUNDS');
     this.refreshTokenExpiresIn = this.configService.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN');
+    this.allowedLoginAttempts = this.configService.getOrThrow<number>('ALLOWED_LOGIN_ATTEMPTS');
+    this.loginBlockDuration = this.configService.getOrThrow<string>('LOGIN_BLOCK_DURATION');
   }
 
   async registerUser(email: string, plaintextPassword: string): Promise<void> {
@@ -44,11 +49,18 @@ export class AuthService {
     }
   }
 
-  async loginUser(email: string, plaintextPassword: string): Promise<AuthTokens> {
-    try {
-      this.logger.log(`Login attempt with email: ${email}`);
-      const user = await this.userRepository.findOneOrFail({ where: { email } });
+  async loginUser(email: string, plaintextPassword: string, clientIp: string): Promise<AuthTokens> {
+    let wasLoginSuccessful = false;
 
+    try {
+      this.logger.log(`Login attempt with email: ${email} from ${clientIp}`);
+      const isLoginBlocked = await this.isLoginBlocked(email, clientIp);
+
+      if (isLoginBlocked) {
+        throw new Error(`Login is blocked for: ${email}, ${clientIp}`);
+      }
+
+      const user = await this.userRepository.findOneOrFail({ where: { email } });
       const isCorrectPassword = await user.validatePassword(plaintextPassword);
 
       if (!isCorrectPassword) {
@@ -59,11 +71,14 @@ export class AuthService {
       const authToken = await this.createAuthToken(user);
       const refreshToken = await this.createRefreshToken(user);
 
+      wasLoginSuccessful = true;
       return { authToken, refreshToken: refreshToken.id };
     } catch (e: unknown) {
       this.logger.error('Login failed');
       this.logger.error(e);
       throw e;
+    } finally {
+      await this.loginRepository.insert({ subject: email, ip: clientIp, success: wasLoginSuccessful });
     }
   }
 
@@ -92,6 +107,19 @@ export class AuthService {
       }
     }
     return { status: 'invalid' };
+  }
+
+  private async isLoginBlocked(subject: string, ip: string): Promise<boolean> {
+    // Frequent failed login attempts from a specific IP address lead to a login block.
+    // Frequent failed login attempts to any subject (existing or non-existing user account) lead to a login block.
+    const timeAtLoginBlockDurationAgo = dayjs().subtract(ms(this.loginBlockDuration), 'milliseconds').toDate();
+    const failedLoginCount = await this.loginRepository
+      .createQueryBuilder('login')
+      .where('(login.subject = :subject OR login.ip = :ip)', { subject, ip })
+      .andWhere('login.success = :success', { success: false })
+      .andWhere('login.createdAt >= :loginAttemptsAfter', { loginAttemptsAfter: timeAtLoginBlockDurationAgo })
+      .getCount();
+    return failedLoginCount >= this.allowedLoginAttempts;
   }
 
   private async maybeRefreshAuthToken(userId: string, tokens: AuthTokens): Promise<AuthTokens> {

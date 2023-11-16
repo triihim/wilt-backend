@@ -12,17 +12,20 @@ import { AuthTokenDto } from '../dto/auth-token.dto';
 import * as jwt from 'jsonwebtoken';
 import ms from 'ms';
 import { validateConfig } from '../../config/config-validation';
+import { Login } from '../entities/login';
 
 describe('Authentication', () => {
   let app: INestApplication;
   let userRepository: Repository<User>;
   let refreshTokenRepository: Repository<RefreshToken>;
+  let loginRepository: Repository<Login>;
   let configService: ConfigService;
   let tokenSecret: string;
 
   const clearUsedDbTables = async () => {
     await refreshTokenRepository.delete({});
     await userRepository.delete({});
+    await loginRepository.delete({});
   };
 
   beforeAll(async () => {
@@ -30,7 +33,7 @@ describe('Authentication', () => {
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
-          envFilePath: [`./env/test.env`],
+          envFilePath: `./env/test.env`,
           validate: validateConfig,
         }),
         TypeOrmModule.forRootAsync({
@@ -46,6 +49,7 @@ describe('Authentication', () => {
 
     userRepository = await module.get(getRepositoryToken(User));
     refreshTokenRepository = await module.get(getRepositoryToken(RefreshToken));
+    loginRepository = await module.get(getRepositoryToken(Login));
     configService = await module.get(ConfigService);
     tokenSecret = configService.getOrThrow<string>('TOKEN_SECRET');
   });
@@ -99,11 +103,11 @@ describe('Authentication', () => {
   });
 
   describe('POST /auth/login', () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
       await supertest(app.getHttpServer()).post(registrationEndpoint).send(registrationDto).expect(HttpStatus.CREATED);
     });
 
-    afterAll(async () => {
+    afterEach(async () => {
       await clearUsedDbTables();
     });
 
@@ -121,6 +125,32 @@ describe('Authentication', () => {
         .post(loginEndpoint)
         .send({ ...loginDto, password: invalidPassword })
         .expect(HttpStatus.FORBIDDEN);
+    });
+
+    it('should block login for a period of time after failed attempts', async () => {
+      const loginBlockDuration = configService.getOrThrow<string>('LOGIN_BLOCK_DURATION');
+      let loginAttempts = configService.getOrThrow<number>('ALLOWED_LOGIN_ATTEMPTS');
+
+      while (loginAttempts--) {
+        // Exhaust the login attempts with invalid credentials.
+        await supertest(app.getHttpServer())
+          .post(loginEndpoint)
+          .send({ ...loginDto, password: invalidPassword });
+      }
+
+      // Expect to be blocked even for valid credentials.
+      await supertest(app.getHttpServer())
+        .post(loginEndpoint)
+        .send({ ...loginDto, password: validPassword })
+        .expect(HttpStatus.FORBIDDEN);
+
+      await new Promise((resolve) => setTimeout(resolve, ms(loginBlockDuration)));
+
+      // Expect the block to lift after configured time.
+      await supertest(app.getHttpServer())
+        .post(loginEndpoint)
+        .send({ ...loginDto, password: validPassword })
+        .expect(HttpStatus.OK);
     });
   });
 

@@ -5,6 +5,8 @@ import { LoginDto } from './dto/login.dto';
 import { AuthTokenDto } from './dto/auth-token.dto';
 import { AllowExpiredAuthToken, AllowUnauthorizedRequest } from './auth.guard';
 import { AuthorizedRequest } from './types/auth.types';
+import { Request } from 'express';
+import { getClientIp } from 'request-ip';
 
 @Controller('auth')
 export class AuthController {
@@ -25,9 +27,13 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @AllowUnauthorizedRequest()
-  async login(@Body() loginDto: LoginDto): Promise<AuthTokenDto> {
+  async login(@Body() loginDto: LoginDto, @Req() request: Request): Promise<AuthTokenDto> {
     try {
-      const authTokens = await this.authService.loginUser(loginDto.email, loginDto.password);
+      const clientIp = getClientIp(request);
+      if (!clientIp) {
+        throw new Error('Could not extract client IP');
+      }
+      const authTokens = await this.authService.loginUser(loginDto.email, loginDto.password, clientIp);
       return authTokens;
     } catch (e: unknown) {
       throw new HttpException('forbidden', HttpStatus.FORBIDDEN);
