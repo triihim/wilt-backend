@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmConfigService } from './config/typeorm.config';
 import { AuthModule } from './auth/auth.module';
 import { validateConfig } from './config/config-validation';
+import { LearningModule } from './learning/learning.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { validateConfig } from './config/config-validation';
       useClass: TypeOrmConfigService,
     }),
     AuthModule,
+    LearningModule,
   ],
   providers: [TypeOrmConfigService],
 })
