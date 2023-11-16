@@ -34,6 +34,9 @@ class EnvironmentVariables {
 
   @IsDefined()
   REFRESH_TOKEN_EXPIRES_IN: string;
+
+  @IsDefined()
+  ALLOW_REGISTRATION: boolean;
 }
 
 export function validateConfig(configuration: Record<string, unknown>) {

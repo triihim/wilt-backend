@@ -21,6 +21,7 @@ export class AuthService {
   private readonly refreshTokenExpiresIn: string;
   private readonly allowedLoginAttempts: number;
   private readonly loginBlockDuration: string;
+  private readonly allowRegistration: boolean;
 
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
@@ -35,11 +36,17 @@ export class AuthService {
     this.refreshTokenExpiresIn = this.configService.getOrThrow<string>('REFRESH_TOKEN_EXPIRES_IN');
     this.allowedLoginAttempts = this.configService.getOrThrow<number>('ALLOWED_LOGIN_ATTEMPTS');
     this.loginBlockDuration = this.configService.getOrThrow<string>('LOGIN_BLOCK_DURATION');
+    this.allowRegistration = this.configService.getOrThrow<boolean>('ALLOW_REGISTRATION');
   }
 
   async registerUser(email: string, plaintextPassword: string): Promise<void> {
     try {
       this.logger.log(`User registration with email: ${email}`);
+
+      if (!this.allowRegistration) {
+        throw new Error('User registration is disabled');
+      }
+
       const passwordHash = await hash(plaintextPassword, this.passwordHashingSaltRounds);
       await this.userRepository.insert({ email, password: passwordHash });
     } catch (e: unknown) {
