@@ -12,7 +12,7 @@ import { AuthTokenDto } from '../dto/auth-token.dto';
 import * as jwt from 'jsonwebtoken';
 import ms from 'ms';
 import { validateConfig } from '../../config/config-validation';
-import { Login } from '../entities/login';
+import { Login } from '../entities/login.entity';
 
 describe('Authentication', () => {
   let app: INestApplication;

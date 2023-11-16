@@ -6,7 +6,7 @@ import { AuthController } from './auth.controller';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from './auth.guard';
-import { Login } from './entities/login';
+import { Login } from './entities/login.entity';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, RefreshToken, Login])],

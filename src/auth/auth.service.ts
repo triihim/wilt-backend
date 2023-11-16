@@ -8,7 +8,7 @@ import { RefreshToken } from './entities/refresh-token.entity';
 import * as jwt from 'jsonwebtoken';
 import { AuthTokenPayload, AuthTokenVerificationResult, AuthTokens } from './types/auth.types';
 import ms from 'ms';
-import { Login } from './entities/login';
+import { Login } from './entities/login.entity';
 import dayjs from 'dayjs';
 
 @Injectable()
