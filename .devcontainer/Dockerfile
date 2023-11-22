@@ -2,6 +2,7 @@ FROM node:18
 
 RUN apt update \
     && apt install -y less man-db sudo \
+    && apt-get install vim -y \
     && npm i -g @nestjs/cli
 
 ARG USERNAME=node
