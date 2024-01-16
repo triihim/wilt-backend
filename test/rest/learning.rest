@@ -1,5 +1,5 @@
-@BASE_URL=host.docker.internal:3000
-@TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiMDY5NGRjMTYtNDgyZS00MzBlLWI4ZjUtOTQ0NTY3MmU3MWUyIiwiZW1haWwiOiJ0ZXN0LmFzZEBnbWFpbC5jb20ifSwiaWF0IjoxNzAwMTcxODU5LCJleHAiOjE3MDAxNzU0NTksInN1YiI6IjA2OTRkYzE2LTQ4MmUtNDMwZS1iOGY1LTk0NDU2NzJlNzFlMiJ9.JBTsMawl_wiQJCn56mOWLb6PezoMSCyxkwP903hJXT0
+@BASE_URL=host.docker.internal:8000
+@TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiMDY5NGRjMTYtNDgyZS00MzBlLWI4ZjUtOTQ0NTY3MmU3MWUyIiwiZW1haWwiOiJ0ZXN0LmFzZEBnbWFpbC5jb20ifSwiaWF0IjoxNzA1MzM3MDM4LCJleHAiOjE3MDUzMzczMzgsInN1YiI6IjA2OTRkYzE2LTQ4MmUtNDMwZS1iOGY1LTk0NDU2NzJlNzFlMiJ9.hqq9R7wBrdf_3lwLkDFHvqmyV3L3Df3g93RsC6CgLw8
 
 # CREATE LEARNING
 POST http://{{BASE_URL}}/learning
@@ -15,6 +15,13 @@ Authorization: Bearer {{TOKEN}}
 
 # GET ONE BY ID
 GET http://{{BASE_URL}}/learning/5
+Authorization: Bearer {{TOKEN}}
+
+
+###
+
+# GET PAGE
+GET http://{{BASE_URL}}/learning/page?page=0&pageSize=5&title=hatti
 Authorization: Bearer {{TOKEN}}
 
 

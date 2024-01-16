@@ -1,4 +1,4 @@
-@BASE_URL=host.docker.internal:3000
+@BASE_URL=host.docker.internal:8000
 
 # REGISTER
 POST http://{{BASE_URL}}/auth/register

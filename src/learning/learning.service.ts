@@ -13,6 +13,19 @@ interface ILearning {
   ownerId: string;
 }
 
+interface ILearningPage {
+  learnings: Array<Omit<ILearning, 'description'>>;
+  totalCount: number;
+}
+
+type PageRequest<T> = {
+  page: number;
+  pageSize: number;
+  filter: {
+    [K in keyof T]?: string;
+  };
+};
+
 @Injectable()
 export class LearningService {
   private readonly logger = new Logger(Learning.name);
@@ -68,6 +81,7 @@ export class LearningService {
         .where('learning."ownerId" = :userId', { userId })
         .andWhere('learning."createdAt" >= :from', { from })
         .andWhere('learning."createdAt" < :to', { to })
+        .orderBy('learning."createdAt"', 'DESC')
         .getMany();
 
       return learnings.map((l) => ({
@@ -80,8 +94,41 @@ export class LearningService {
       }));
     } catch (e: unknown) {
       this.logger.error(
-        `Error fetching learnins for user ${userId} within ${from.toISOString()} - ${to.toISOString()}`,
+        `Error fetching learnings for user ${userId} within ${from.toISOString()} - ${to.toISOString()}`,
       );
+      throw e;
+    }
+  }
+
+  async findInPage(userId: string, pageRequest: PageRequest<ILearning>): Promise<ILearningPage> {
+    const { page, pageSize, filter } = pageRequest;
+    try {
+      // TODO: Hard coded config values to env.
+      if (page < 0) throw new Error('invalid page number');
+      if (pageSize > 50) throw new Error('invalid page size');
+
+      const [learnings, learningCountOfUser] = await this.learningRepository
+        .createQueryBuilder('learning')
+        .where('learning."ownerId" = :userId', { userId })
+        .andWhere('learning."title" ilike :titleFilter', { titleFilter: `%${filter.title}%` })
+        .orderBy('learning."createdAt"', 'DESC')
+        .skip(page * pageSize)
+        .take(pageSize)
+        .getManyAndCount();
+
+      return {
+        learnings: learnings.map((l) => ({
+          id: l.id,
+          title: l.title,
+          description: l.description,
+          ownerId: userId,
+          createdAt: l.createdAt,
+          updatedAt: l.updatedAt,
+        })),
+        totalCount: learningCountOfUser,
+      };
+    } catch (e: unknown) {
+      this.logger.error(`Error fetching learnings for user ${userId}`);
       throw e;
     }
   }

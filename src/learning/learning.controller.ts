@@ -19,10 +19,25 @@ import { AuthorizedRequest } from '../auth/types/auth.types';
 import { CreateLearningDto } from './dto/create-learning.dto';
 import { LearningDto } from './dto/learning.dto';
 import { UpdateLearningDto } from './dto/update-learning.dto';
+import { LearningPageDto } from './dto/learning-page.dto';
 
 @Controller('learning')
 export class LearningController {
   constructor(private readonly learningService: LearningService) {}
+
+  @Get('/page')
+  async getLearningsPage(
+    @Req() request: AuthorizedRequest,
+    @Query('page', ParseIntPipe) page: number,
+    @Query('pageSize', ParseIntPipe) pageSize: number,
+    @Query('title') title: string = '',
+  ): Promise<LearningPageDto> {
+    try {
+      return await this.learningService.findInPage(request.user.id, { page, pageSize, filter: { title } });
+    } catch (e: unknown) {
+      throw new BadRequestException();
+    }
+  }
 
   @Get(':id')
   async getLearningById(
@@ -45,7 +60,7 @@ export class LearningController {
     // TODO: define max daterange
     // TODO: Date parsing pipe.
     try {
-      return await this.learningService.findInDateRange(request.user.id, new Date(from), new Date(to));
+      return await this.learningService.findInDateRange(request.user.id, from, to);
     } catch (e: unknown) {
       throw new BadRequestException();
     }
