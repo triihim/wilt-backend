@@ -13,6 +13,6 @@ async function bootstrap() {
     origin: corsOrigins.split(/\s+/),
   });
 
-  await app.listen(8000);
+  await app.listen(process.env.PORT ? +process.env.PORT : 80);
 }
 bootstrap();
