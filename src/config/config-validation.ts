@@ -37,6 +37,9 @@ class EnvironmentVariables {
 
   @IsDefined()
   ALLOW_REGISTRATION: boolean;
+
+  @IsDefined()
+  CORS_ORIGINS: string;
 }
 
 export function validateConfig(configuration: Record<string, unknown>) {
