@@ -26,3 +26,38 @@ jobs:
         run: |
           docker build . -t ${{ secrets.ACR_LOGIN_SERVER }}/wilt-backend:latest
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/wilt-backend:latest
+
+  start:
+    needs: deploy-image
+    name: Start container
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure login
+        uses: azure/login@v1
+        with:
+          cres: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Start container
+        uses: azure/container-apps-deploy-action@v1
+        with:
+          imageToBuild: ${{ secrets.ACR_LOGIN_SERVER }}/wilt-backend:latest
+          resourceGroup: ${{ secrets.RESOURCE_GROUP }}
+          containerAppName: wilt-backend
+          containerAppEnvironment: wilt-container-env
+          location: Sweden Central
+          environmentVariables: |
+            DB_TYPE=secretref:DB_TYPE 
+            DB_HOST=secretref:DB_HOST 
+            DB_PORT=secretref:DB_PORT 
+            DB_USERNAME=secretref:DB_USERNAME 
+            DB_PASSWORD=secretref:DB_PASSWORD 
+            DB_NAME=secretref:DB_NAME 
+            SALT_ROUNDS=secretref:SALT_ROUNDS 
+            TOKEN_ALGORITHM=secretref:TOKEN_ALGORITHM 
+            TOKEN_SECRET=secretref:TOKEN_SECRET 
+            TOKEN_EXPIRES_IN=secretref:TOKEN_EXPIRES_IN 
+            REFRESH_TOKEN_EXPIRES_IN=secretref:REFRESH_TOKEN_EXPIRES_IN 
+            ALLOWED_LOGIN_ATTEMPTS=secretref:ALLOWED_LOGIN_ATTEMPTS 
+            LOGIN_BLOCK_DURATION=secretref:LOGIN_BLOCK_DURATION 
+            ALLOW_REGISTRATION=secretref:ALLOW_REGISTRATION 
+            CORS_ORIGINS=secretref:CORS_ORIGINS
