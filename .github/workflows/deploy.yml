@@ -55,7 +55,7 @@ jobs:
             TOKEN_ALGORITHM=secretref:tokenalg
             TOKEN_SECRET=secretref:tokensecret
             TOKEN_EXPIRES_IN=secretref:tokenexpiresin
-            REFRESH_TOKEN_EXPIRES_IN=secretref:expiresin
+            REFRESH_TOKEN_EXPIRES_IN=secretref:rtexpiresin
             ALLOWED_LOGIN_ATTEMPTS=secretref:allowedloginattempts
             LOGIN_BLOCK_DURATION=secretref:loginblockduration
             ALLOW_REGISTRATION=secretref:allowregistration
