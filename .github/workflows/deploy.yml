@@ -44,7 +44,7 @@ jobs:
           resourceGroup: ${{ secrets.RESOURCE_GROUP }}
           containerAppName: wilt-backend
           containerAppEnvironment: wilt-container-env
-          location: Sweden Central
+          location: 'Sweden Central'
           environmentVariables: |
             DB_TYPE=secretref:DB_TYPE 
             DB_HOST=secretref:DB_HOST 
