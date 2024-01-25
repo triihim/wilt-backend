@@ -44,6 +44,7 @@ jobs:
           resourceGroup: ${{ secrets.RESOURCE_GROUP }}
           containerAppName: wilt-backend
           location: "'Sweden Central'"
+          targetPort: 8080
           environmentVariables: >
             DB_TYPE=secretref:dbtype
             DB_HOST=secretref:dbhost
@@ -60,3 +61,4 @@ jobs:
             LOGIN_BLOCK_DURATION=secretref:loginblockduration
             ALLOW_REGISTRATION=secretref:allowregistration
             CORS_ORIGINS=secretref:corsorigins
+            PORT=8080
