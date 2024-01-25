@@ -40,7 +40,7 @@ jobs:
       - name: Start container
         uses: azure/container-apps-deploy-action@v1
         with:
-          imageToBuild: ${{ secrets.ACR_LOGIN_SERVER }}/wilt-backend:latest
+          imageToDeploy: ${{ secrets.ACR_LOGIN_SERVER }}/wilt-backend:latest
           resourceGroup: ${{ secrets.RESOURCE_GROUP }}
           containerAppName: wilt-backend
           containerAppEnvironment: wilt-container-env
