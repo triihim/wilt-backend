@@ -60,5 +60,5 @@ jobs:
             ALLOWED_LOGIN_ATTEMPTS=secretref:allowedloginattempts
             LOGIN_BLOCK_DURATION=secretref:loginblockduration
             ALLOW_REGISTRATION=secretref:allowregistration
-            CORS_ORIGINS=secretref:corsorigins
+            CORS_ORIGIN=secretref:corsorigin
             PORT=8080

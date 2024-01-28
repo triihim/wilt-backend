@@ -7,10 +7,10 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.useGlobalPipes(new ValidationPipe());
 
-  const corsOrigins = app.get(ConfigService).getOrThrow<string>('CORS_ORIGINS');
+  const corsOrigin = app.get(ConfigService).getOrThrow<string>('CORS_ORIGIN');
 
   app.enableCors({
-    origin: corsOrigins.split(/\s+/),
+    origin: corsOrigin,
   });
 
   await app.listen(process.env.PORT ? +process.env.PORT : 80);
