@@ -28,7 +28,7 @@ type PageRequest<T> = {
 
 @Injectable()
 export class LearningService {
-  private readonly logger = new Logger(Learning.name);
+  private readonly logger = new Logger(LearningService.name);
 
   constructor(
     @InjectRepository(Learning) private readonly learningRepository: Repository<Learning>,
