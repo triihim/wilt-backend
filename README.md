@@ -4,9 +4,6 @@
 
 [Wilt](https://wilt.triihimaki.com) (**W**hat **I** **L**earned **T**oday) is a hobby project with a focus on evolving into a learning journal with AI capabilities. Currently, the app allows users to document their learnings. In the future, the goal is to expand functionality to support the addition of both manually created and AI-generated flashcards. This feature aims to enhance the learning experience and will be complemented by statistics to track and motivate users in their learning journeys.
 
-> [!TIP]
-> The app can be tested at **https://wilt.triihimaki.com** by logging in with shared test user credentials by clicking **"Login with shared test user account"**
-
 ## Requirements to run
 
 - VSCode devcontainers https://code.visualstudio.com/docs/devcontainers/containers
